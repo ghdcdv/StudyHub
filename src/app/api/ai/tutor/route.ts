@@ -21,6 +21,7 @@ export async function POST(request: Request): Promise<Response> {
     assertSameOrigin(request);
     const user = await requireUser();
     const body = await readJson(request, tutorSchema);
+    const uploadIds = body.uploadIds ?? [];
     await enforceRateLimit(
       user.id,
       "ai:tutor",
@@ -55,12 +56,12 @@ export async function POST(request: Request): Promise<Response> {
         orderBy: { createdAt: "desc" },
         take: 14
       }),
-      body.uploadIds.length
-        ? db.upload.findMany({
-            where: {
-              userId: user.id,
-              id: { in: body.uploadIds }
-            },
+      (body.uploadIds?.length ?? 0) > 0
+          ? db.upload.findMany({
+              where: {
+                userId: user.id,
+                id: { in: body.uploadIds ?? [] }
+              },
             select: {
               fileName: true,
               extractedText: true,
